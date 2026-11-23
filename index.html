@@ -35,8 +35,22 @@ header::before{content:"";display:block;height:4px;background:linear-gradient(90
 .menu a{text-decoration:none;font-size:22px;padding-top:3px;display:block;transition:color .15s}
 .menu a:hover,.menu a.on{color:var(--red)}
 
+/* ticker */
+.ticker{display:flex;align-items:stretch;height:36px;background:var(--blue);color:#fff;overflow:hidden}
+.ticker[hidden]{display:none}
+.tlabel{flex:none;display:flex;align-items:center;padding:3px 14px 0;background:var(--red);font-size:18px;letter-spacing:.04em}
+.tview{flex:1;overflow:hidden;position:relative;-webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+.ttrack{display:flex;width:max-content;height:100%;align-items:center;animation:tick var(--tdur,60s) linear infinite}
+.ticker:hover .ttrack{animation-play-state:paused}
+.ttrack a{white-space:nowrap;text-decoration:none;font-size:14px;padding:0 4px;color:#fff}
+.ttrack a:hover{text-decoration:underline}
+.ttrack .sep{color:var(--red);padding:0 18px;font-size:10px}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ttrack{animation:none}}
+@media (max-width:760px){.tlabel{font-size:16px;padding:3px 10px 0}.ttrack a{font-size:13px}}
+
 /* hero */
-.hero{padding:120px 0 100px;border-bottom:1px solid var(--line)}
+.hero{padding:120px 0 100px}
 .hero h1{font-size:clamp(64px,13vw,150px);margin:0;color:var(--blue)}
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{margin:28px 0 0;max-width:520px;color:var(--muted);font-size:17px}
@@ -48,6 +62,11 @@ section{padding:96px 0;border-bottom:1px solid var(--line)}
 .label small{color:var(--muted);font-size:14px}
 
 /* projects */
+.ptoggle{width:100%;background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;justify-content:space-between;align-items:center}
+.ptoggle .ar{font-size:44px;color:var(--red);transition:transform .25s;line-height:1}
+.ptoggle[aria-expanded="true"] .ar{transform:rotate(45deg)}
+.ptoggle:hover h2{color:var(--red)}
+#projects:not(.open) .ptoggle{margin-bottom:0}
 .plist{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
 .pitem{border-bottom:1px solid var(--line)}
 .prow{width:100%;display:grid;grid-template-columns:56px 1fr 28px;align-items:center;gap:12px;padding:26px 0 22px;background:none;border:0;cursor:pointer;text-align:left;color:inherit;font:inherit}
@@ -86,6 +105,8 @@ section{padding:96px 0;border-bottom:1px solid var(--line)}
 .nitem time{font-size:20px;color:var(--muted);padding-top:4px}
 .nitem h3{margin:0 0 6px;font-size:19px;font-weight:500;line-height:1.4}
 .nitem p{margin:0;color:#444}
+.nitem .src{display:inline-block;margin-top:6px;font-size:13px;color:var(--muted);text-decoration:none}
+.nitem .src:hover{color:var(--red)}
 .more{margin-top:24px;background:none;border:1px solid var(--ink);padding:10px 20px;font:inherit;font-size:14px;cursor:pointer}
 .more:hover{background:var(--ink);color:#fff}
 
@@ -130,8 +151,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <div class="wrap nav">
     <a class="brand" href="#top"><img src="assets/logo.jpg" alt="ITES MEDIA"></a>
     <ul class="menu bebas">
-      <li><a href="#projects">Նախագծեր</a></li>
       <li><a href="#news">Նորություններ</a></li>
+      <li><a href="#projects">Նախագծեր</a></li>
       <li><a href="#about">Մեր մասին</a></li>
     </ul>
   </div>
@@ -145,10 +166,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     </div>
   </div>
 
+  <div class="ticker" id="ticker" hidden>
+    <span class="tlabel bebas">Լրահոս</span>
+    <div class="tview"><div class="ttrack" id="ttrack"></div></div>
+  </div>
+
   <section id="projects">
     <div class="wrap">
-      <div class="label"><h2 class="bebas">Նախագծեր</h2></div>
-      <ul class="plist" id="plist"></ul>
+      <button class="label ptoggle" id="ptoggle" aria-expanded="false" aria-controls="plist">
+        <h2 class="bebas">Նախագծեր</h2><span class="ar bebas">+</span>
+      </button>
+      <ul class="plist" id="plist" hidden></ul>
     </div>
   </section>
 
@@ -221,6 +249,26 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     };
   });
 
+  // ticker: latest news titles, duplicated once so the loop is seamless
+  const tItems = S.news.slice(0, 8).filter(n => n.title);
+  if (tItems.length) {
+    const one = tItems.map(n => `<a href="#news">${esc(n.title)}</a><span class="sep">●</span>`).join("");
+    $("ttrack").innerHTML = one + one;
+    $("ticker").hidden = false;
+    requestAnimationFrame(() => {   // constant speed (~60px/s) whatever the length
+      $("ttrack").style.setProperty("--tdur", Math.max(20, $("ttrack").scrollWidth / 2 / 60) + "s");
+    });
+  }
+
+  // whole Projects list opens/closes from its heading (and from the menu link)
+  const setProjects = open => {
+    $("projects").classList.toggle("open", open);
+    $("ptoggle").setAttribute("aria-expanded", open);
+    $("plist").hidden = !open;
+  };
+  $("ptoggle").onclick = () => setProjects($("plist").hidden);
+  document.querySelector('.menu a[href="#projects"]').addEventListener("click", () => setProjects(true));
+
   // video modal
   const modal = $("modal"), mbox = modal.querySelector(".box");
   const closeVideo = () => { modal.classList.remove("open"); mbox.querySelector("iframe")?.remove(); };
@@ -237,7 +285,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   const renderNews = () => {
     $("nlist").innerHTML = S.news.slice(0, shown).map(n => `
       <li class="nitem"><time class="bebas" datetime="${esc(n.date)}">${fmt(n.date)}</time>
-      <div><h3>${esc(n.title)}</h3>${n.text ? `<p>${esc(n.text)}</p>` : ""}</div></li>`).join("");
+      <div><h3>${esc(n.title)}</h3>${n.text ? `<p>${esc(n.text)}</p>` : ""}${n.source ? `<a class="src" href="${esc(n.url||"#")}" target="_blank" rel="noopener">Աղբյուր՝ ${esc(n.source)} ↗</a>` : ""}</div></li>`).join("");
     $("more").hidden = S.news.length <= shown;
   };
   $("more").onclick = () => { shown += 6; renderNews(); };
