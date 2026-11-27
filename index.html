@@ -55,13 +55,19 @@ header::before{content:"";display:block;height:4px;background:linear-gradient(90
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{margin:28px 0 0;max-width:520px;color:var(--muted);font-size:17px}
 
-/* banners */
-.banner{padding:40px 0}
-.banner[hidden]{display:none}
-.banner a{display:block;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
-.banner img{display:block;width:100%;height:auto;aspect-ratio:2/1;transition:transform .4s}
-.banner a:hover img{transform:scale(1.015)}
-#banner-top{padding-bottom:0}
+/* side promo: slides in from the right */
+.promo{position:fixed;right:16px;bottom:16px;z-index:40;width:300px;background:#fff;box-shadow:0 10px 30px rgba(2,42,102,.28);transform:translateX(calc(100% + 24px));transition:transform .6s cubic-bezier(.2,.8,.2,1)}
+.promo.show{transform:none}
+.promo[hidden]{display:none}
+.promo a{display:block;text-decoration:none;color:#fff}
+.promo img{display:block;width:100%;aspect-ratio:2/1}
+.promo .go{display:flex;justify-content:space-between;align-items:center;background:var(--blue);padding:9px 12px 7px;font-size:19px;letter-spacing:.02em}
+.promo .go span:last-child{color:#fff;background:var(--red);padding:2px 8px 0}
+.promo a:hover .go{background:var(--red)}
+.promo a:hover .go span:last-child{background:var(--blue)}
+.promo .px{position:absolute;top:-12px;right:-12px;width:28px;height:28px;border-radius:50%;border:0;background:var(--blue);color:#fff;font-size:18px;line-height:28px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.promo .px:hover{background:var(--red)}
+@media (max-width:760px){.promo{width:220px;right:12px;bottom:12px}.promo .go{font-size:16px;padding:7px 10px 5px}}
 
 /* sections */
 section{padding:96px 0;border-bottom:1px solid var(--line)}
@@ -179,8 +185,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="tview"><div class="ttrack" id="ttrack"></div></div>
   </div>
 
-  <div class="banner" id="banner-top" hidden><div class="wrap"></div></div>
-
   <section id="projects">
     <div class="wrap">
       <button class="label ptoggle" id="ptoggle" aria-expanded="false" aria-controls="plist">
@@ -198,8 +202,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     </div>
   </section>
 
-  <div class="banner" id="banner-mid" hidden><div class="wrap"></div></div>
-
   <section id="about">
     <div class="wrap">
       <div class="label"><h2 class="bebas">Մեր մասին</h2></div>
@@ -214,6 +216,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <footer>
   <div class="wrap"><span>© <span id="year"></span> ITES MEDIA</span><span>itesmedia.am</span></div>
 </footer>
+
+<aside class="promo" id="promo" hidden><button class="px" aria-label="Փակել">×</button></aside>
 
 <div class="modal" id="modal"><div class="box"><button class="x" aria-label="Փակել">×</button></div></div>
 
@@ -261,14 +265,22 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     };
   });
 
-  // banners (content.js → banners): slot "top" under the ticker, "mid" after news
-  (S.banners || []).forEach(b => {
-    const slot = $("banner-" + (b.slot || "top"));
-    if (!slot || !b.img || !b.url) return;
-    slot.querySelector(".wrap").insertAdjacentHTML("beforeend",
-      `<a href="${esc(b.url)}" target="_blank" rel="noopener"><img src="${esc(b.img)}" alt="${esc(b.alt)}" loading="lazy"></a>`);
-    slot.hidden = false;
-  });
+  // side promo (content.js → promo): slides in after a few seconds; × hides it for this visit
+  const P = S.promo;
+  if (P && P.img && P.url) {
+    let closed = false; try { closed = sessionStorage.getItem("promoClosed") === "1"; } catch (e) {}
+    if (!closed) {
+      const el = $("promo");
+      el.insertAdjacentHTML("beforeend",
+        `<a href="${esc(P.url)}" target="_blank" rel="noopener"><img src="${esc(P.img)}" alt="${esc(P.alt)}"><div class="go bebas"><span>${esc(P.label || "")}</span><span>→</span></div></a>`);
+      el.hidden = false;
+      setTimeout(() => el.classList.add("show"), (P.delay || 3) * 1000);
+      el.querySelector(".px").onclick = () => {
+        el.classList.remove("show"); setTimeout(() => el.hidden = true, 600);
+        try { sessionStorage.setItem("promoClosed", "1"); } catch (e) {}
+      };
+    }
+  }
 
   // ticker: latest news titles, duplicated once so the loop is seamless
   const tItems = S.news.slice(0, 8).filter(n => n.title);
