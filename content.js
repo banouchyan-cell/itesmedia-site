@@ -19,6 +19,13 @@ window.SITE = {
     { title: "Ֆուտբոլ Կարեն Պողոսյանի հետ", text: "", id: "PLexGlDWyhJn_3pqDA1L55AN5XYvtSWo6u" }
   ],
 
+  // ---- ԲԱՆՆԵՐՆԵՐ ----
+  // slot: "top" — լրահոսի տակ, "mid" — նորություններից հետո. img-ը 2:1 նկար է assets-ում
+  banners: [
+    { slot: "top", img: "assets/banner-ruben.webp", url: "https://banuchyanformayor.am", alt: "Ռուբեն Բանուչյան — 2 — Քաղաքը՝ բոլորին" },
+    { slot: "mid", img: "assets/banner-ruben.webp", url: "https://banuchyanformayor.am", alt: "Ռուբեն Բանուչյան — 2 — Քաղաքը՝ բոլորին" }
+  ],
+
   // ---- ՆՈՐՈՒԹՅՈՒՆՆԵՐ ----
   // Կարճ տեքստային լուրեր. նորը ավելացրու ամենավերևում։
   // source/url — աղբյուրի անունն ու հղումը (ցույց է տրվում լուրի տակ)

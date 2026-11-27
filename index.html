@@ -55,6 +55,14 @@ header::before{content:"";display:block;height:4px;background:linear-gradient(90
 .hero h1 em{font-style:normal;color:var(--red)}
 .hero p{margin:28px 0 0;max-width:520px;color:var(--muted);font-size:17px}
 
+/* banners */
+.banner{padding:40px 0}
+.banner[hidden]{display:none}
+.banner a{display:block;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.banner img{display:block;width:100%;height:auto;aspect-ratio:2/1;transition:transform .4s}
+.banner a:hover img{transform:scale(1.015)}
+#banner-top{padding-bottom:0}
+
 /* sections */
 section{padding:96px 0;border-bottom:1px solid var(--line)}
 .label{display:flex;align-items:baseline;gap:14px;margin:0 0 40px}
@@ -171,6 +179,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
     <div class="tview"><div class="ttrack" id="ttrack"></div></div>
   </div>
 
+  <div class="banner" id="banner-top" hidden><div class="wrap"></div></div>
+
   <section id="projects">
     <div class="wrap">
       <button class="label ptoggle" id="ptoggle" aria-expanded="false" aria-controls="plist">
@@ -187,6 +197,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <button class="more" id="more" hidden>Ավելին</button>
     </div>
   </section>
+
+  <div class="banner" id="banner-mid" hidden><div class="wrap"></div></div>
 
   <section id="about">
     <div class="wrap">
@@ -247,6 +259,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
         + `<a href="https://www.youtube.com/playlist?list=${encodeURIComponent(pid)}" target="_blank" rel="noopener">Բոլոր թողարկումները YouTube-ում ↗</a>`;
       b.querySelectorAll(".vthumb").forEach(t => t.onclick = () => openVideo(t.dataset.v));
     };
+  });
+
+  // banners (content.js → banners): slot "top" under the ticker, "mid" after news
+  (S.banners || []).forEach(b => {
+    const slot = $("banner-" + (b.slot || "top"));
+    if (!slot || !b.img || !b.url) return;
+    slot.querySelector(".wrap").insertAdjacentHTML("beforeend",
+      `<a href="${esc(b.url)}" target="_blank" rel="noopener"><img src="${esc(b.img)}" alt="${esc(b.alt)}" loading="lazy"></a>`);
+    slot.hidden = false;
   });
 
   // ticker: latest news titles, duplicated once so the loop is seamless
